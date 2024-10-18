@@ -1,70 +1,131 @@
-# Getting Started with Create React App
+# AssetSafe
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+AssetSafe is a decentralized application (dApp) that automates the process of asset approval and transfer on the Ethereum blockchain. It allows users to batch transfer ERC-20 tokens and NFTs from their wallet to a specified smart contract address, without needing to manually approve each transaction. This streamlines asset management by allowing users to transfer multiple assets in one go.
 
-## Available Scripts
+## Table of Contents
 
-In the project directory, you can run:
+- [AssetSafe](#assetsafe)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Tech Stack](#tech-stack)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Usage](#usage)
+  - [Project Structure](#project-structure)
+  - [Security Considerations](#security-considerations)
+  - [Contributing](#contributing)
+  - [License](#license)
 
-### `npm start`
+## Features
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Automatic ERC-20 Approval:** Automatically approves ERC-20 token transfers to a specified contract without manual intervention.
+- **Batch Transfer:** Transfer multiple ERC-20 tokens and NFTs in a single transaction.
+- **Wallet Integration:** Connects to MetaMask for seamless user authentication and transaction signing.
+- **Gas Optimization:** Approves and transfers assets with optimized gas usage.
+- **Real-time Status:** Provides live updates on the asset transfer and approval process.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Tech Stack
 
-### `npm test`
+- **Frontend:** React.js
+- **Backend:** Node.js (if applicable)
+- **Blockchain:** Ethereum (Smart contract interaction)
+- **Libraries:** 
+  - `ethers.js` for blockchain interaction
+  - `axios` for making API requests
+  - `Tailwind CSS` for styling
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Prerequisites
 
-### `npm run build`
+Before running AssetSafe, ensure you have the following:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. **Node.js and npm:** [Install Node.js](https://nodejs.org/) if you haven’t already.
+2. **MetaMask:** [Install MetaMask](https://metamask.io/) browser extension.
+3. **Infura Account:** Sign up for an Infura account and get a project ID for connecting to the Ethereum network.
+4. **Etherscan API Key:** Obtain an API key from [Etherscan](https://etherscan.io/apis) for querying token balances.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To install AssetSafe, follow these steps:
 
-### `npm run eject`
+1. **Clone the Repository:**
+    ```bash
+    git clone https://github.com/Levi-Chinecherem/AssetSafe.git
+    cd AssetSafe
+    ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+2. **Install Dependencies:**
+    ```bash
+    npm install
+    ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Configuration
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. **Create a `.env` File:**
+   Create a `.env` file in the root directory and configure the following environment variables:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+   ```plaintext
+   REACT_APP_INFURA_URL=https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
+   REACT_APP_ETHERSCAN_API_KEY=YOUR_ETHERSCAN_API_KEY
+   REACT_APP_CONTRACT_ADDRESS=0xYOUR_CONTRACT_ADDRESS
+   REACT_APP_PRIVATE_KEY=YOUR_WALLET_PRIVATE_KEY
+   ```
 
-## Learn More
+   - **`REACT_APP_INFURA_URL`**: Your Infura project URL (replace `YOUR_INFURA_PROJECT_ID` with your Infura project ID).
+   - **`REACT_APP_ETHERSCAN_API_KEY`**: Your Etherscan API key for fetching token data.
+   - **`REACT_APP_CONTRACT_ADDRESS`**: The address of the smart contract to interact with.
+   - **`REACT_APP_PRIVATE_KEY`**: The private key of the wallet for automated transaction signing (ensure this is managed securely).
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Usage
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. **Start the Development Server:**
+   ```bash
+   npm start
+   ```
 
-### Code Splitting
+2. **Open the Application:**
+   Open [http://localhost:3000](http://localhost:3000) in your web browser.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+3. **Connect Your Wallet:**
+   - Click the **Connect Wallet** button.
+   - Approve the connection request in MetaMask.
 
-### Analyzing the Bundle Size
+4. **Transfer Assets:**
+   - Once connected, the system will automatically approve and transfer all eligible ERC-20 tokens and NFTs to the specified smart contract.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Project Structure
 
-### Making a Progressive Web App
+```
+AssetSafe/
+├── public/                     # Public assets
+├── src/
+│   ├── components/
+│   │   └── AssetTransfer.js    # Main component for asset transfer
+│   ├── App.js                  # Root component
+│   ├── index.js                # Application entry point
+│   ├── styles/                 # Styling (Tailwind CSS)
+│   └── utils/                  # Utility functions (e.g., API integrations)
+├── .env                        # Environment variables (not included in Git)
+├── package.json                # Project dependencies
+└── README.md                   # Project documentation
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Security Considerations
 
-### Advanced Configuration
+- **Keep Your Private Key Secure:** Do not expose your private key in the source code. Ensure that it is managed securely through environment variables or other secure methods.
+- **Avoid Hardcoding Sensitive Information:** Never hardcode sensitive information like private keys or Infura project secrets in the codebase.
+- **Use a Test Network:** While developing, use a test network like Sepolia or Ropsten to avoid losing real funds.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Contributing
 
-### Deployment
+Contributions are welcome! To contribute:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+1. Fork the repository.
+2. Create a new feature branch (`git checkout -b feature-name`).
+3. Commit your changes (`git commit -m 'Add some feature'`).
+4. Push to the branch (`git push origin feature-name`).
+5. Create a new Pull Request.
 
-### `npm run build` fails to minify
+## License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is licensed under the MIT License. See the `LICENSE` file for details.
