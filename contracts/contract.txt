@@ -1,0 +1,14 @@
+
+C:\Development\tools\assetsafe (main)
+λ npx hardhat run scripts/deploy.js --network sepolia
+AssetTransferContract deployed to: 0xda37048D99c4d4dcAd861eB151c700f619a9ef0
+
+C:\Development\tools\assetsafe (main)
+λ npx hardhat verify --network sepolia 0xda37048D99c4d4dcAd861eB151c700f619a9ef04
+Nothing to compile
+Successfully submitted source code for contract
+contracts/AssetSafe.sol:AssetTransferContract at 0xda37048D99c4d4dcAd861eB151c700f619a9ef04
+for verification on the block explorer. Waiting for verification result...
+
+Successfully verified contract AssetTransferContract on Etherscan.
+https://sepolia.etherscan.io/address/0xda37048D99c4d4dcAd861eB151c700f619a9ef04#code

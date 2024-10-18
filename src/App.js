@@ -1,25 +1,21 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+import React, { useState } from 'react';
+import AssetList from './components/AssetList';
+import Header from './components/Header';
+import AssetTransfer from './components/AssetTransfer';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const App = () => {
+    const [assets, setAssets] = useState([]);
+
+    return (
+        <div className="App min-h-screen bg-gray-900 text-yellow-200 font-serif">
+            <Header />
+            <main className="container mx-auto px-4 py-8">
+                <AssetTransfer setAssets={setAssets} />
+                <AssetList assets={assets} />
+            </main>
+        </div>
+    );
+};
 
 export default App;
